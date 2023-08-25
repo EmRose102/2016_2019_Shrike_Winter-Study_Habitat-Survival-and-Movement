@@ -1,0 +1,1129 @@
+## Modeling of data subset for all shrikes across 2 winter seasons (2016-17 and 2017-18) in Craighead and Poinsett Counties of Arkansas
+
+
+#laptop directory
+setwd("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts")
+LOSH16<-read.csv("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts/LOSH habitat by group/LOSHtotal_all birds_for R.csv", sep=",", header=T)
+head(LOSH16)
+
+
+####Named LOSH16 but really includes data from 2106-17 and 2017-18 seasons!!!!!
+
+#desktop directory
+setwd("C:/Users/Emily.Donahue/Desktop/Data Analysis with R/LOSH Scripts")
+LOSH16<-read.csv("C:/Users/Emily.Donahue/Desktop/Data Analysis with R/LOSH Scripts/LOSH16HabitatforR.csv", sep=",", header=T)
+head(LOSH16)
+
+library(lme4)
+library(AICcmodavg)
+
+#Check Correlation
+
+
+LOSHcorsubset<-read.csv("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts/LOSH habitat total/LOSHtotal_for R_corsubset.csv", sep=",", header=T)
+LOSHcoversubset<-read.csv("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts/LOSH habitat total/LOSHtotal_for R_landcoversubset.csv", sep=",", header=T)
+
+
+source("MyLibrary.R")
+pairs(LOSHcorsubset,lower.panel=panel.cor, upper.panel=panel.smooth2)
+pairs(LOSHcoversubset,lower.panel=panel.cor, upper.panel=panel.smooth2)
+
+
+#Rescale Variables
+
+#Wire Length
+rescale<-function(x) (x-min(x)) / (max(x) - min(x)) * 100
+Wire250scale<-rescale(LOSH16$Wire250)
+Wire100scale<-rescale(LOSH16$Wire100)
+
+
+####________________________ 500 m scale ____________________________####
+
+##FULL MODEL
+## glmer(Use ~ Corn500 + Cotton500 + Rice500 + Soy500 +
+## Fallow500 + Develop500 +Forest500 + (1|PointID) + (1|BirdID) + (1|Year), 
+## family = binomial,nAGQ =0,  data = LOSH16, nAGQ=0)
+
+#__________Random Effects_____________
+
+random500.2<- glmer(Use ~ Corn500 + Cotton500 + Rice500 + Soy500 +
+                      Fallow500 + Develop500 +Forest500 + (1|PointID) + (1|BirdID), 
+                    family = binomial, nAGQ =0,  data = LOSH16)
+
+random500.1a<- glmer(Use ~ Corn500 + Cotton500 + Rice500 + Soy500 +
+                       Fallow500 + Develop500 +Forest500 + (1|PointID), 
+                     family = binomial, nAGQ =0, data = LOSH16)
+
+random500.1b<- glmer(Use ~ Corn500 + Cotton500 + Rice500 + Soy500 +
+                       Fallow500 + Develop500 +Forest500 + (1|Year), 
+                     family = binomial, nAGQ =0, data = LOSH16)
+
+
+anova(random500.1a,random500.2) #BirdID does improve model
+anova(random500.1b,random500.2) #PointID does not improve model
+summary(random500.2)
+summary(random500.1b)
+summary(random500.1a)
+
+#__________Fixed Effects_____________
+
+#Round1
+
+null<- glmer(Use ~ 1 + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nullYR<- glmer(Use ~ Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Corn500<- glmer(Use ~ Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Cotton500<- glmer(Use ~ Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Rice500<- glmer(Use ~ Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Soy500<- glmer(Use ~ Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Fallow500<- glmer(Use ~ Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Develop500<- glmer(Use ~ Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Forest500<- glmer(Use ~ Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+AIC500set1<-AIC(null,nullYR,Corn500,Cotton500,Rice500,Soy500,Fallow500,Develop500,Forest500)
+
+
+deltaAIC500.1<-AIC500set1-(AIC(Develop500))
+table500AIC1<-cbind(AIC500set1,deltaAIC500.1)
+table500AIC1
+
+summary(Develop500)
+
+confint(Develop500,level=0.85, method="Wald")
+
+#Round 1: Develop is best predictor
+
+#Round2
+
+null<- glmer(Use ~ 1 + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nullYR<- glmer(Use ~ Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Develop500<- glmer(Use ~ Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+D.Corn500<- glmer(Use ~ Corn500 + Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+D.Cotton500<- glmer(Use ~ Cotton500 + Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+D.Rice500<- glmer(Use ~ Rice500 + Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+D.Soy500<- glmer(Use ~ Soy500 + Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+D.Fallow500<- glmer(Use ~ Fallow500 + Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+D.Forest500<- glmer(Use ~ Develop500 + Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+AIC500set2<-AIC(null,nullYR,Develop500,D.Corn500,D.Cotton500,D.Rice500,D.Soy500,D.Fallow500,D.Forest500)
+
+deltaAIC500.2<-AIC500set2-(AIC(Develop500))
+table500AIC2<-cbind(AIC500set2,deltaAIC500.2)
+table500AIC2
+
+
+summary(Develop500)
+
+confint(Develop500,level=0.85, method="Wald")
+confint(D.Corn500,level=0.85, method="Wald")
+confint(D.Cotton500,level=0.85, method="Wald")
+confint(D.Rice500,level=0.85, method="Wald")
+confint(D.Soy500,level=0.85, method="Wald")
+confint(D.Fallow500,level=0.85, method="Wald")
+confint(D.Forest500,level=0.85, method="Wald")
+
+
+#Develop and fallow the best
+
+
+#### end ####
+
+####____________________ 250 m Scale _________________________####
+
+
+##Hab.FULL<- glmer(Use ~ Wire250scale + WireAvg250 + WoodyPerches250 + WoodyAvg250
+## + NonnatPerches250 + NonnatAvg250 + Ditches250 + DitchWavg250 + GrassWavg250 + GrassHavg250
+## + (1|PointIDtied) + (1|BirdID), family = binomial, data = LOSHhab)
+
+
+#_________Random Effects__________
+
+random250.2<- glmer(Use ~ Wire250scale + WireAvg250 + WoodyPerches250 + WoodyAvg250 + 
+                  NonnatPerches250 + NonnatAvg250 + Ditches250 + DitchWavg250 + 
+                  GrassWavg250 + GrassHavg250 + (1|PointID) + (1|BirdID), 
+                  family = binomial, nAGQ=0, data = LOSH16)
+random250.1<- glmer(Use ~ Wire250scale + WireAvg250 + WoodyPerches250 + WoodyAvg250 + 
+                  NonnatPerches250 + NonnatAvg250 + Ditches250 + DitchWavg250 + 
+                  GrassWavg250 + GrassHavg250 + (1|PointID), 
+                   family = binomial, nAGQ =0, data = LOSH16)
+
+anova(random250.1,random250.2)
+summary(random250.1)
+
+
+
+#__________250 Fixed Effects_____________
+
+#250Round1
+
+null<- glmer(Use ~ 1 + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wire250<- glmer(Use ~ Wire250scale + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+woody250<- glmer(Use ~ WoodyPerches250 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+manmade250<- glmer(Use ~ NonnatPerches250 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditches250<- glmer(Use ~ Ditches250 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditch.w250<- glmer(Use ~ DitchWavg250 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.w250<- glmer(Use ~ GrassWavg250 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h250<- glmer(Use ~ GrassHavg250 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+AIC250set1<-AIC(null,wire250,woody250,manmade250,ditches250,ditch.w250,grass.w250,grass.h250)
+
+deltaAIC250.1<-AIC250set1-(AIC(wire250))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+#wire250 best predictor
+
+#Round2
+
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+woody250.D<- glmer(Use ~ WoodyPerches250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nonnat250.D<- glmer(Use ~ NonnatPerches250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditches250.D<- glmer(Use ~ Ditches250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditch.w250.D<- glmer(Use ~ DitchWavg250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.w250.D<- glmer(Use ~ GrassWavg250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h250.D<- glmer(Use ~ GrassHavg250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+AIC250set1<-AIC(wi250.D, woody250.D, nonnat250.D, ditches250.D, ditch.w250.D, grass.w250.D, grass.h250.D)
+
+
+deltaAIC250.1<-AIC250set1-(AIC(wi250.D))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+
+#Round3
+
+
+null<- glmer(Use ~ 1 + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nullYR<- glmer(Use ~ Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+Develop500<- glmer(Use ~ Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wi250.D.C<- glmer(Use ~ Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.Cot<- glmer(Use ~ Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.R<- glmer(Use ~ Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.S<- glmer(Use ~ Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.Fa<- glmer(Use ~ Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.Fo<- glmer(Use ~ Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wi250.D.Fa<- glmer(Use ~ Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+woody250.D.Fa<- glmer(Use ~ WoodyPerches250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nonnat250.D.Fa<- glmer(Use ~ NonnatPerches250 +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditches250.D.Fa<- glmer(Use ~ Ditches250 +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditch.w250.D.Fa<- glmer(Use ~ DitchWavg250 +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.w250.D.Fa<- glmer(Use ~ GrassWavg250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h250.D.Fa<- glmer(Use ~ GrassHavg250 +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wi250.D.Cot<- glmer(Use ~ Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+woody250.D.Cot<- glmer(Use ~ WoodyPerches250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nonnat250.D.Cot<- glmer(Use ~ NonnatPerches250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditches250.D.Cot<- glmer(Use ~ Ditches250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditch.w250.D.Cot<- glmer(Use ~ DitchWavg250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.w250.D.Cot<- glmer(Use ~ GrassWavg250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h250.D.Cot<- glmer(Use ~ GrassHavg250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+
+
+AIC250set1<-AIC(wi250.D.C, wi250.D.Cot, wi250.D.R, wi250.D.S, wi250.D.Fa, wi250.D.Fo, wi250.D,
+                woody250.D.Fa, nonnat250.D.Fa, ditches250.D.Fa, ditch.w250.D.Fa, grass.w250.D.Fa, grass.h250.D.Fa,
+                woody250.D.Cot, nonnat250.D.Cot, ditches250.D.Cot, ditch.w250.D.Cot, grass.w250.D.Cot, grass.h250.D.Cot)
+
+
+
+
+deltaAIC250.1<-AIC250set1-(AIC(wi250.D ))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+
+####Round 4
+
+wi250.D.C<- glmer(Use ~ Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.Cot<- glmer(Use ~ Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.R<- glmer(Use ~ Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.S<- glmer(Use ~ Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.Fa<- glmer(Use ~ Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.Fo<- glmer(Use ~ Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wi250.ditches250.D.C<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditches250.D.Cot<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditches250.D.R<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditches250.D.S<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditches250.D.Fa<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditches250.D.Fo<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.ditches250<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wi250.nonnat250.D.C<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.nonnat250.D.Cot<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.nonnat250.D.R<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.nonnat250.D.S<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.nonnat250.D.Fa<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.nonnat250.D.Fo<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.D.nonnat250<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+
+wi250.woody250.D.Fa<- glmer(Use ~ Wire250scale +WoodyPerches250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.nonnat250.D.Fa<- glmer(Use ~ Wire250scale +NonnatPerches250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditches250.D.Fa<- glmer(Use ~ Wire250scale +Ditches250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.ditch.w250.D.Fa<- glmer(Use ~ Wire250scale +DitchWavg250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.grass.w250.D.Fa<- glmer(Use ~ Wire250scale +GrassWavg250 +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wi250.grass.h250.D.Fa<- glmer(Use ~ Wire250scale +GrassHavg250 +Develop500Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+
+#___________________________
+
+AIC250set1<-AIC(wi250.D.C, wi250.D.Cot, wi250.D.R, wi250.D.S, wi250.D.Fa, wi250.D.Fo, wi250.D,
+                wi250.ditches250.D.C, wi250.ditches250.D.Cot, wi250.ditches250.D.R, wi250.ditches250.D.S, wi250.ditches250.D.Fa, wi250.ditches250.D.Fo, wi250.D.ditches250,
+                wi250.nonnat250.D.C, wi250.nonnat250.D.Cot, wi250.nonnat250.D.R, wi250.nonnat250.D.S, wi250.nonnat250.D.Fa, wi250.nonnat250.D.Fo, wi250.D.nonnat250,
+                wi250.woody250.D.Fa, wi250.ditch.w250.D.Fa, wi250.grass.w250.D.Fa, wi250.grass.h250.D.Fa)
+
+
+
+deltaAIC250.1<-AIC250set1-(AIC(wi250.D.Fa))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+
+
+
+confint(wire250.develop500,level=0.85, method="Wald")
+confint(wi.di.wi.h250.d500,level=0.85, method="Wald")
+
+
+
+
+#Looking at your model's CI of beta coefficients, do they cross zero, if so it's not an informative model. - intercept means the variable was avoided, + means variable was selected for
+#confint("model")
+#confint("model",level=0.85) 
+
+#wire250.develop500 moves on
+
+####____________end_______________####
+
+####____________________ 100 m Scale _________________________####
+
+
+##Hab.FULL<- glmer(Use ~ Wire100scale + WireAvg100 + WoodyPerches100 + WoodyAvg100
+## + NonnatPerches100 + NonnatAvg100 + Ditches100 + DitchWavg100 + GrassWavg100 + GrassHavg100
+## + (1|PointIDtied) + (1|BirdID), family = binomial, data = LOSHhab)
+
+
+#_________Random Effects__________
+
+random100.2<- glmer(Use ~ Wire100scale + WireAvg100 + WoodyPerches100 + WoodyAvg100 + 
+                      NonnatPerches100 + NonnatAvg100 + Ditches100 + DitchWavg100 + 
+                      GrassWavg100 + GrassHavg100 + (1|PointID) + (1|BirdID), 
+                    family = binomial, nAGQ=0, data = LOSH16)
+random100.1<- glmer(Use ~ Wire100scale + WireAvg100 + WoodyPerches100 + WoodyAvg100 + 
+                      NonnatPerches100 + NonnatAvg100 + Ditches100 + DitchWavg100 + 
+                      GrassWavg100 + GrassHavg100 + (1|PointID), 
+                    family = binomial, nAGQ =0, data = LOSH16)
+
+anova(random100.1,random100.2)
+summary(random100.1)
+
+
+
+#__________100 Fixed Effects_____________
+
+
+#100Round1
+
+woody100<- glmer(Use ~ WoodyPerches100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+manmade100<- glmer(Use ~ NonnatPerches100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditches100<- glmer(Use ~ Ditches100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditch.w100<- glmer(Use ~ DitchWavg100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.w100<- glmer(Use ~ GrassWavg100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100<- glmer(Use ~ GrassHavg100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+AIC250set1<-AIC(null,woody100,manmade100,ditches100,ditch.w100,grass.w100,grass.h100)
+
+deltaAIC250.1<-AIC250set1-(AIC(ditches100))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+#wire100 best predictor
+
+#100Round2
+
+di.woody100<- glmer(Use ~ Ditches100 + WoodyPerches100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di.manmade100<- glmer(Use ~ Ditches100 + NonnatPerches100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditches100<- glmer(Use ~ Ditches100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di.ditch.w100<- glmer(Use ~ Ditches100 + DitchWavg100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di.grass.w100<- glmer(Use ~ Ditches100 + GrassWavg100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di.grass.h100<- glmer(Use ~ Ditches100 + GrassHavg100 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+AIC250set1<-AIC(null,di.woody100,di.manmade100,ditches100,di.ditch.w100,di.grass.w100,di.grass.h100)
+
+deltaAIC250.1<-AIC250set1-(AIC(di.grass.h100))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+
+
+#Round3
+
+wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+woody100.di100.wi250.D<- glmer(Use ~ WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+manmade100.di100.wi250.D<- glmer(Use ~ NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ditch.w100.di100.wi250.D<- glmer(Use ~ DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.w100.di100.wi250.D<- glmer(Use ~ GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.di100.wi250.D<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+di100.wi250.D.C<- glmer(Use ~ Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.wi250.D.Cot<- glmer(Use ~ Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.wi250.D.R<- glmer(Use ~ Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+di100.wi250.D.S<- glmer(Use ~ Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+di100.wi250.D.Fa<- glmer(Use ~ Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.wi250.D.Fo<- glmer(Use ~ Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+grass.h100.di100.wi250.D.C<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.di100.wi250.D.Cot<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.di100.wi250.D.R<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.di100.wi250.D.S<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.di100.wi250.D.Fa<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.di100.wi250.D.Fo<- glmer(Use ~ GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+di100.woody250.wi250.D<- glmer(Use ~ Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.nonnat250.wi250.D<- glmer(Use ~ Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.ditch.w250.wi250.D<- glmer(Use ~ Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.grass.w250.wi250.D<- glmer(Use ~ Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+di100.grass.h250.wi250.D<- glmer(Use ~ Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+grass.h100.wi250.D.C<- glmer(Use ~ GrassHavg100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.wi250.D.Cot<- glmer(Use ~ GrassHavg100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.wi250.D.R<- glmer(Use ~ GrassHavg100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.wi250.D.S<- glmer(Use ~ GrassHavg100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.wi250.D.Fa<- glmer(Use ~ GrassHavg100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.wi250.D.Fo<- glmer(Use ~ GrassHavg100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ditch.w100.di100.wi250.D.S<- glmer(Use ~ DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+grass.h100.nonnat100.wi250.D.S<- glmer(Use ~ GrassHavg100 +NonnatPerches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+grass.h100.nonnat100.wi250.D.Fa<- glmer(Use ~ GrassHavg100 +NonnatPerches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+
+AIC250set1<-AIC(wi250.D, woody100.di100.wi250.D, manmade100.di100.wi250.D, ditch.w100.di100.wi250.D, grass.w100.di100.wi250.D, grass.h100.di100.wi250.D,
+                di100.wi250.D.C, di100.wi250.D.Cot, di100.wi250.D.R, di100.wi250.D.S, di100.wi250.D.Fa, di100.wi250.D.Fo,
+                grass.h100.di100.wi250.D.C, grass.h100.di100.wi250.D.Cot, grass.h100.di100.wi250.D.R, grass.h100.di100.wi250.D.S, grass.h100.di100.wi250.D.Fa, grass.h100.di100.wi250.D.Fo,
+                di100.woody250.wi250.D, di100.nonnat250.wi250.D, di100.ditch.w250.wi250.D, di100.grass.w250.wi250.D, di100.grass.h250.wi250.D,
+                grass.h100.wi250.D.C, grass.h100.wi250.D.Cot, grass.h100.wi250.D.R, grass.h100.wi250.D.S, grass.h100.wi250.D.Fa, grass.h100.wi250.D.Fo,
+                ditch.w100.di100.wi250.D.S,
+                grass.h100.nonnat100.wi250.D.S, grass.h100.nonnat100.wi250.D.Fa)
+
+
+
+
+deltaAIC250.1<-AIC250set1-(AIC(grass.h100.di100.wi250.D.S))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+
+ditch.w.di100.wi250.D.S<- glmer(Use ~ DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointIDtied) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+AIC(grass.h100.di100.wi250.D.S)
+
+
+confint(nonnat.di.wi250.grass.w250.D,level=0.85, method="Wald")
+confint(wi.di.wi.h250.d500,level=0.85, method="Wald")
+
+
+
+
+####____________end_______________####
+
+
+####____________________ 11 m Scale _________________________####
+
+
+##Hab.FULL<- glmer(Use ~ PerchType11 + PerchH11 + Water11 + WaterType11
+## + DitchWavg11 + DitchDbelowAvg11 + WaterDavg11 + Crops11 + CropType11 
+## + Tilled11 + Burned11
+## + (1|PointID) + (1|BirdID), family = binomial, data = LOSH16)
+
+
+#_________Random Effects__________
+
+random11.2<- glmer(Use ~ PerchType11 + PerchH11 + Water11 +
+                    DitchWavg11 + DitchDbelowAvg11 + WaterDavg11 + Crops11 + CropType11 + 
+                    Tilled11 + Burned11 +
+                    (1|PointID) + (1|BirdID), family = binomial,nAGQ = 0, data = LOSH16)
+random11.1<- glmer(Use ~ PerchType11 + PerchH11 + Water11 +
+                    DitchWavg11 + DitchDbelowAvg11 + WaterDavg11 + Crops11 + CropType11 + 
+                    Tilled11 + Burned11 +
+                    (1|PointID), family = binomial, nAGQ = 0, data = LOSH16)
+
+anova(random11.1,random11.2)
+summary(random11.1)
+
+
+
+#__________11 Fixed Effects_____________
+
+#11Round1
+
+#1) Take Forest500 and Wire250 and Wire100 and Manmade100 to compare to 11 m parameters
+
+wa11<- glmer(Use ~ Water11 + Year + (1|PointIDtied) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+crop11<- glmer(Use ~ Crops11 + Year + (1|PointIDtied) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11<- glmer(Use ~Water11 +Crops11 + Year + (1|PointIDtied) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+AIC250set1<-AIC(wa11,crop11,wa.crop11)
+
+deltaAIC250.1<-AIC250set1-(AIC(wa11))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+#####2) 11 m Round 2 Compare best single 100 variables in bivariate models
+
+#_________________________________________________________________________
+
+#wa and crop
+wa.crop11.wi250.D<- glmer(Use ~ Water11 +Crops11 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.woody100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.manmade100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.ditch.w100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.w100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.di100.wi250.D.C<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.R<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wa.crop11.grass.h100.di100.wi250.D.C<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.R<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.di100.woody250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.nonnat250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.ditch.w250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.grass.w250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.grass.h250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.grass.h100.wi250.D.C<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.wi250.D.Cot<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.wi250.D.R<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.wi250.D.Fa<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.wi250.D.Fo<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.ditch.w100.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+#wa only
+wa.wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.woody100.di100.wi250.D<- glmer(Use ~ Water11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.manmade100.di100.wi250.D<- glmer(Use ~ Water11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.ditch.w100.di100.wi250.D<- glmer(Use ~ Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.w100.di100.wi250.D<- glmer(Use ~ Water11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wa.di100.wi250.D.C<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.R<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.S<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wa.grass.h100.di100.wi250.D.C<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.R<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.S<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.di100.woody250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.nonnat250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.ditch.w250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.grass.w250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.grass.h250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.grass.h100.wi250.D.C<- glmer(Use ~ Water11 +GrassHavg100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.wi250.D.Cot<- glmer(Use ~ Water11 +GrassHavg100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.wi250.D.R<- glmer(Use ~ Water11 +GrassHavg100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.wi250.D.S<- glmer(Use ~ Water11 +GrassHavg100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.wi250.D.Fa<- glmer(Use ~ Water11 +GrassHavg100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.wi250.D.Fo<- glmer(Use ~ Water11 +GrassHavg100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.ditch.w100.di100.wi250.D.S<- glmer(Use ~ Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+#____________________________________
+AIC250set1<-AIC(
+  
+  wa.crop11.wi250.D, wa.crop11.woody100.di100.wi250.D, wa.crop11.manmade100.di100.wi250.D, wa.crop11.ditch.w100.di100.wi250.D, wa.crop11.grass.w100.di100.wi250.D, wa.crop11.grass.h100.di100.wi250.D,
+  wa.crop11.di100.wi250.D.C, wa.crop11.di100.wi250.D.Cot, wa.crop11.di100.wi250.D.R, wa.crop11.di100.wi250.D.S, wa.crop11.di100.wi250.D.Fa, wa.crop11.di100.wi250.D.Fo,
+wa.crop11.grass.h100.di100.wi250.D.C, wa.crop11.grass.h100.di100.wi250.D.Cot, wa.crop11.grass.h100.di100.wi250.D.R, wa.crop11.grass.h100.di100.wi250.D.S, wa.crop11.grass.h100.di100.wi250.D.Fa, wa.crop11.grass.h100.di100.wi250.D.Fo,
+wa.crop11.di100.woody250.wi250.D, wa.crop11.di100.nonnat250.wi250.D, wa.crop11.di100.ditch.w250.wi250.D, wa.crop11.di100.grass.w250.wi250.D, wa.crop11.di100.grass.h250.wi250.D,
+wa.crop11.grass.h100.wi250.D.C, wa.crop11.grass.h100.wi250.D.Cot, wa.crop11.grass.h100.wi250.D.R, wa.crop11.grass.h100.wi250.D.S, wa.crop11.grass.h100.wi250.D.Fa, wa.crop11.grass.h100.wi250.D.Fo,
+wa.crop11.ditch.w100.di100.wi250.D.S,
+wa.wi250.D, wa.woody100.di100.wi250.D, wa.manmade100.di100.wi250.D, wa.ditch.w100.di100.wi250.D, wa.grass.w100.di100.wi250.D, wa.grass.h100.di100.wi250.D,
+wa.di100.wi250.D.C, wa.di100.wi250.D.Cot, wa.di100.wi250.D.R, wa.di100.wi250.D.S, wa.di100.wi250.D.Fa, wa.di100.wi250.D.Fo,
+grass.h100.di100.wi250.D.C, wa.grass.h100.di100.wi250.D.Cot, wa.grass.h100.di100.wi250.D.R, wa.grass.h100.di100.wi250.D.S, wa.grass.h100.di100.wi250.D.Fa, wa.grass.h100.di100.wi250.D.Fo,
+wa.di100.woody250.wi250.D, wa.di100.nonnat250.wi250.D, wa.di100.ditch.w250.wi250.D, wa.di100.grass.w250.wi250.D, wa.di100.grass.h250.wi250.D,
+wa.grass.h100.wi250.D.C, wa.grass.h100.wi250.D.Cot, wa.grass.h100.wi250.D.R, wa.grass.h100.wi250.D.S, wa.grass.h100.wi250.D.Fa, wa.grass.h100.wi250.D.Fo,
+wa.ditch.w100.di100.wi250.D.S)
+
+
+
+
+deltaAIC250.1<-AIC250set1-(AIC(wa.grass.h100.di100.wi250.D.S))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+
+wa.grass.h.di.wi250.F.D<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Fallow500 +Develop500 + Year + (1|PointIDtied) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+AIC(wa.grass.h.di.wi250.D)
+
+
+#water presence is best model
+
+
+####____________end_______________####
+
+
+####____________________ 5 m Scale _________________________####
+
+##Hab.FULL<- glmer(Use ~ PerchType5 + PerchH5 + Water5 + WaterType5
+## + DitchWavg5 + DitchDbelowAvg5 + WaterDavg5 + Crops5 + CropType5 
+## + Tilled5 + Burned5
+## + (1|PointID) + (1|BirdID), family = binomial, data = LOSH16)
+
+
+#_________Random Effects__________
+
+random5.2<- glmer(Use ~ PerchType5 + PerchH5 + Water5 +
+                     DitchWavg5 + DitchDbelowAvg5 + WaterDavg5 + Crops5 + CropType5 + 
+                     Tilled5 + Burned5 +
+                     (1|PointID) + (1|BirdID), family = binomial,nAGQ = 1, data = LOSH16)
+random5.1<- glmer(Use ~ PerchType5 + PerchH5 + Water5 +
+                     DitchWavg5 + DitchDbelowAvg5 + WaterDavg5 + Crops5 + CropType5 + 
+                     Tilled5 + Burned5 +
+                     (1|PointID), family = binomial, nAGQ = 1, data = LOSH16)
+
+anova(random5.1,random5.2)
+summary(random5.1)
+
+
+
+
+#__________5 Fixed Effects_____________
+
+#5Round1
+
+#1) Take Forest500 and Wire250 and Wire100 and Manmade100 and Perch Type 11 to compare to 5 m parameters
+
+perch.t5<- glmer(Use ~ PerchType5 + (1|PointID), family = binomial, nAGQ =1, data = LOSH16)
+perch.h5<- glmer(Use ~ PerchH5 + (1|PointID), family = binomial, nAGQ =1, data = LOSH16)
+water5<- glmer(Use ~ Water5 + (1|PointID), family = binomial, nAGQ =1, data = LOSH16)
+crops5<- glmer(Use ~ Crops5 + (1|PointID), family = binomial, nAGQ =1, data = LOSH16)
+crop.t5<- glmer(Use ~ CropType5 + (1|PointID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+AIC5set1<-AIC(perch.t5, perch.h5, water5, 
+           crops5, crop.t5)
+
+deltaAIC5.1<-AIC5set1-(AIC(perch.t5))
+table5AIC1<-cbind(AIC5set1,deltaAIC5.1)
+table5AIC1
+
+confint(perch.t5,level=0.85, method="Wald")
+confint(water11,level=0.85)
+
+summary(perch.t11)
+
+
+
+
+#2) Compare best single 100 variables in bivariate models
+
+#ph
+#wa and crop
+
+
+
+ph.wa.crop11.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.woody100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.manmade100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.ditch.w100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.w100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.crop11.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ph.wa.crop11.grass.h100.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.crop11.di100.woody250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.nonnat250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.ditch.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.grass.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.grass.h250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.crop11.ditch.w100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+#wa only
+ph.wa.wi250.D<- glmer(Use ~ PerchH5 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.woody100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.manmade100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.ditch.w100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.w100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ph.wa.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ph.wa.grass.h100.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.di100.woody250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.nonnat250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.ditch.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.grass.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.grass.h250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.ditch.w100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+
+
+
+#no ph
+#wa and crop
+
+
+
+wa.crop11.wi250.D<- glmer(Use ~ Water11 +Crops11 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.woody100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.manmade100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.ditch.w100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.w100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.di100.wi250.D.C<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.R<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wa.crop11.grass.h100.di100.wi250.D.C<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.R<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.di100.woody250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.nonnat250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.ditch.w250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.grass.w250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.grass.h250.wi250.D<- glmer(Use ~ Water11 +Crops11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.crop11.ditch.w100.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+#wa only
+wa.wi250.D<- glmer(Use ~ Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.woody100.di100.wi250.D<- glmer(Use ~ Water11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.manmade100.di100.wi250.D<- glmer(Use ~ Water11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.ditch.w100.di100.wi250.D<- glmer(Use ~ Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.w100.di100.wi250.D<- glmer(Use ~ Water11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wa.di100.wi250.D.C<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.R<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.S<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+wa.grass.h100.di100.wi250.D.C<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.R<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.S<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.di100.woody250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.nonnat250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.ditch.w250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.grass.w250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.di100.grass.h250.wi250.D<- glmer(Use ~ Water11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+wa.ditch.w100.di100.wi250.D.S<- glmer(Use ~ Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+
+#________________________________
+
+AIC250set1<-AIC(ph.wa.crop11.wi250.D, ph.wa.crop11.woody100.di100.wi250.D, ph.wa.crop11.manmade100.di100.wi250.D, ph.wa.crop11.ditch.w100.di100.wi250.D, ph.wa.crop11.grass.w100.di100.wi250.D, ph.wa.crop11.grass.h100.di100.wi250.D,
+                ph.wa.crop11.di100.wi250.D.C, ph.wa.crop11.di100.wi250.D.Cot, ph.wa.crop11.di100.wi250.D.R, ph.wa.crop11.di100.wi250.D.S, ph.wa.crop11.di100.wi250.D.Fa, ph.wa.crop11.di100.wi250.D.Fo,
+                ph.wa.crop11.grass.h100.di100.wi250.D.C, ph.wa.crop11.grass.h100.di100.wi250.D.Cot, ph.wa.crop11.grass.h100.di100.wi250.D.R, ph.wa.crop11.grass.h100.di100.wi250.D.S, ph.wa.crop11.grass.h100.di100.wi250.D.Fa, ph.wa.crop11.grass.h100.di100.wi250.D.Fo,
+                ph.wa.crop11.di100.woody250.wi250.D, ph.wa.crop11.di100.nonnat250.wi250.D, ph.wa.crop11.di100.ditch.w250.wi250.D, ph.wa.crop11.di100.grass.w250.wi250.D, ph.wa.crop11.di100.grass.h250.wi250.D,
+                ph.wa.crop11.ditch.w100.di100.wi250.D.S,
+                ph.wa.wi250.D, ph.wa.woody100.di100.wi250.D, ph.wa.manmade100.di100.wi250.D, ph.wa.ditch.w100.di100.wi250.D, ph.wa.grass.w100.di100.wi250.D, ph.wa.grass.h100.di100.wi250.D,
+                ph.wa.di100.wi250.D.C, ph.wa.di100.wi250.D.Cot, ph.wa.di100.wi250.D.R, ph.wa.di100.wi250.D.S, ph.wa.di100.wi250.D.Fa, ph.wa.di100.wi250.D.Fo,
+                ph.wa.grass.h100.di100.wi250.D.C, ph.wa.grass.h100.di100.wi250.D.Cot, ph.wa.grass.h100.di100.wi250.D.R, ph.wa.grass.h100.di100.wi250.D.S, ph.wa.grass.h100.di100.wi250.D.Fa, ph.wa.grass.h100.di100.wi250.D.Fo,
+                ph.wa.di100.woody250.wi250.D, ph.wa.di100.nonnat250.wi250.D, ph.wa.di100.ditch.w250.wi250.D, ph.wa.di100.grass.w250.wi250.D, ph.wa.di100.grass.h250.wi250.D,
+                ph.wa.ditch.w100.di100.wi250.D.S,
+                wa.crop11.wi250.D, wa.crop11.woody100.di100.wi250.D, wa.crop11.manmade100.di100.wi250.D, wa.crop11.ditch.w100.di100.wi250.D, wa.crop11.grass.w100.di100.wi250.D, wa.crop11.grass.h100.di100.wi250.D,
+                wa.crop11.di100.wi250.D.C, wa.crop11.di100.wi250.D.Cot, wa.crop11.di100.wi250.D.R, wa.crop11.di100.wi250.D.S, wa.crop11.di100.wi250.D.Fa, wa.crop11.di100.wi250.D.Fo,
+                wa.crop11.grass.h100.di100.wi250.D.C, wa.crop11.grass.h100.di100.wi250.D.Cot, wa.crop11.grass.h100.di100.wi250.D.R, wa.crop11.grass.h100.di100.wi250.D.S, wa.crop11.grass.h100.di100.wi250.D.Fa, wa.crop11.grass.h100.di100.wi250.D.Fo,
+                wa.crop11.di100.woody250.wi250.D, wa.crop11.di100.nonnat250.wi250.D, wa.crop11.di100.ditch.w250.wi250.D, wa.crop11.di100.grass.w250.wi250.D, wa.crop11.di100.grass.h250.wi250.D,
+                wa.crop11.ditch.w100.di100.wi250.D.S,
+                wa.wi250.D, wa.woody100.di100.wi250.D, wa.manmade100.di100.wi250.D, wa.ditch.w100.di100.wi250.D, wa.grass.w100.di100.wi250.D, wa.grass.h100.di100.wi250.D,
+                wa.di100.wi250.D.C, wa.di100.wi250.D.Cot, wa.di100.wi250.D.R, wa.di100.wi250.D.S, wa.di100.wi250.D.Fa, wa.di100.wi250.D.Fo,
+                wa.grass.h100.di100.wi250.D.C, wa.grass.h100.di100.wi250.D.Cot, wa.grass.h100.di100.wi250.D.R, wa.grass.h100.di100.wi250.D.S, wa.grass.h100.di100.wi250.D.Fa, wa.grass.h100.di100.wi250.D.Fo,
+                wa.di100.woody250.wi250.D, wa.di100.nonnat250.wi250.D, wa.di100.ditch.w250.wi250.D, wa.di100.grass.w250.wi250.D, wa.di100.grass.h250.wi250.D,
+                wa.ditch.w100.di100.wi250.D.S)
+
+
+
+
+deltaAIC250.1<-AIC250set1-(AIC(ph.wa.grass.h100.di100.wi250.D.S))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+confint(pt.ph.wa.grass.h100.di100.wi250.D.S,level=0.85, method="Wald")
+confint(water11,level=0.85)
+
+summary(pt.ph.wa.grass.h100.di100.wi250.D.S)
+
+
+
+
+
+####TOP MODELS####______________________________________________________________________________________________####
+
+##___________________________________________________________
+#______________________________________________
+#________________________________________________
+
+
+
+wa.crop11.di100.wi250.D.C<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Cot<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.R<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.S<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Fa<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+wa.crop11.di100.wi250.D.Fo<- glmer(Use ~ Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ph.wa.crop11.grass.h100.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.crop11.di100.woody250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.nonnat250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.ditch.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.grass.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.grass.h250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.crop11.ditch.w100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+#wa only
+ph.wa.wi250.D<- glmer(Use ~ PerchH5 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.woody100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +WoodyPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.manmade100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +NonnatPerches100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.ditch.w100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +DitchWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.w100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +GrassWavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ph.wa.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+ph.wa.grass.h100.di100.wi250.D.C<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Corn500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.R<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Rice500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D.Fo<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Forest500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.di100.woody250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +WoodyPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.nonnat250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +NonnatPerches250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.ditch.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +DitchWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.grass.w250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +GrassWavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.grass.h250.wi250.D<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +GrassHavg250 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+ph.wa.crop11.di100.wi250.D.S              11  965.9111 -952.9775   1.9336104
+ph.wa.crop11.grass.h100.di100.wi250.D.S   12  965.0064 -951.9775   1.0288788
+ph.wa.grass.h100.di100.wi250.D            10  965.6962 -953.9775   1.7187285
+ph.wa.di100.wi250.D.S                     10  964.9208 -953.9775   0.9433548
+ph.wa.grass.h100.di100.wi250.D.Cot        11  965.2408 -952.9775   1.2633311
+ph.wa.grass.h100.di100.wi250.D.R          11  966.8531 -952.9775   2.8756606
+ph.wa.grass.h100.di100.wi250.D.S          11  963.9775 -952.9775   0.0000000
+
+
+
+AIC250set1<-AIC(pt.ph.wa.nonnat.wi250.ditches250.D, pt.ph.wa.nonnat.wi250.grass.w250.D,
+                pt.wa.crop11.nonnat.wi250.ditches250.D,
+                pt.wa.nonnat.wi250.woody250.D,pt.wa.nonnat.wi250.ditches250.D,pt.wa.nonnat.wi250.ditch.w250.D,pt.wa.nonnat.wi250.grass.w250.D,pt.wa.nonnat.wi250.grass.h250.D)
+
+deltaAIC250.1<-AIC250set1-(AIC(pt.wa.nonnat.wi250.ditches250.D))
+table250AIC1<-cbind(AIC250set1,deltaAIC250.1)
+table250AIC1
+
+pt.wa.nonnat.wi250.ditches250.D<- glmer(Use ~ PerchType5 +Water11 +NonnatPerches100 +Wire250scale +Ditches250 +Develop500 + (1|PointIDtied) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+confint(pt.wa.nonnat.wi250.ditches250.D,level=0.85, method="Wald")
+
+
+#AICc
+AIC5set1<-c(
+  
+  AICc(null),
+  AICc(nullYR),
+  AICc(ph.wa.crop11.di100.wi250.D.S),
+  AICc(ph.wa.crop11.di100.wi250.D.Fa),
+  AICc(ph.wa.crop11.di100.wi250.D.Fo),
+  AICc(ph.wa.crop11.grass.h100.di100.wi250.D.C),
+  AICc(ph.wa.crop11.grass.h100.di100.wi250.D.Cot),
+  AICc(ph.wa.crop11.grass.h100.di100.wi250.D.R),
+  AICc(ph.wa.crop11.grass.h100.di100.wi250.D.S),
+  AICc(ph.wa.crop11.grass.h100.di100.wi250.D.Fa),
+  AICc(ph.wa.crop11.grass.h100.di100.wi250.D.Fo),
+  AICc(ph.wa.crop11.di100.woody250.wi250.D),
+  AICc(ph.wa.crop11.di100.nonnat250.wi250.D),
+  AICc(ph.wa.crop11.di100.ditch.w250.wi250.D),
+  AICc(ph.wa.crop11.di100.grass.w250.wi250.D),
+  AICc(ph.wa.crop11.di100.grass.h250.wi250.D),
+  AICc(ph.wa.crop11.ditch.w100.di100.wi250.D.S),
+  AICc(ph.wa.wi250.D),
+  AICc(ph.wa.woody100.di100.wi250.D),
+  AICc(ph.wa.manmade100.di100.wi250.D),
+  AICc(ph.wa.ditch.w100.di100.wi250.D),
+  AICc(ph.wa.grass.w100.di100.wi250.D),
+  AICc(ph.wa.grass.h100.di100.wi250.D),
+  AICc(ph.wa.di100.wi250.D.C),
+  AICc(ph.wa.di100.wi250.D.Cot),
+  AICc(ph.wa.di100.wi250.D.R),
+  AICc(ph.wa.di100.wi250.D.S),
+  AICc(ph.wa.di100.wi250.D.Fa),
+  AICc(ph.wa.di100.wi250.D.Fo))
+  
+  
+
+deltaAIC5.1<-AIC5set1-(AICc(ph.wa.di100.wi250.D.S))
+table5AIC1<-cbind(AIC5set1,deltaAIC5.1)
+table5AIC1
+
+
+##REDUCED TOP AICc MODELS
+
+null<- glmer(Use ~ 1 + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+nullYR<- glmer(Use ~ Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.crop11.grass.h100.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Crops11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.grass.h100.di100.wi250.D<- glmer(Use ~ PerchH5 +Water11 +GrassHavg100 +Ditches100 +Wire250scale +Develop500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Cot<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Cotton500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.S<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Soy500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+ph.wa.di100.wi250.D.Fa<- glmer(Use ~ PerchH5 +Water11 +Ditches100 +Wire250scale +Develop500 +Fallow500 + Year + (1|PointID) + (1|BirdID), family = binomial, nAGQ =1, data = LOSH16)
+
+
+AIC5set1<-c(	AICc(null),	
+              AICc(nullYR),
+              AICc(ph.wa.crop11.di100.wi250.D.S),
+              AICc(ph.wa.crop11.grass.h100.di100.wi250.D.Cot),
+              AICc(ph.wa.crop11.grass.h100.di100.wi250.D.S),
+              AICc(ph.wa.grass.h100.di100.wi250.D),
+              AICc(ph.wa.di100.wi250.D.Cot),
+              AICc(ph.wa.di100.wi250.D.S),
+              AICc(ph.wa.di100.wi250.D.Fa))
+              
+  
+  
+deltaAIC5.1<-AIC5set1-(AICc(ph.wa.di100.wi250.D.S))
+table5AIC1<-cbind(AIC5set1,deltaAIC5.1)
+table5AIC1
+
+confint(ph.wa.crop11.di100.wi250.D.S,level=0.85, method="Wald")
+confint(ph.wa.crop11.grass.h100.di100.wi250.D.Cot,level=0.85, method="Wald")
+confint(ph.wa.crop11.grass.h100.di100.wi250.D.S,level=0.85, method="Wald")
+confint(ph.wa.grass.h100.di100.wi250.D,level=0.85, method="Wald")
+confint(ph.wa.di100.wi250.D.Cot,level=0.85, method="Wald")
+confint(ph.wa.di100.wi250.D.S,level=0.85, method="Wald")
+confint(ph.wa.di100.wi250.D.Fa,level=0.85, method="Wald")
+
+summary(ph.wa.di100.wi250.D.S)
+summary(ph.wa.crop11.grass.h100.di100.wi250.D.S)
+summary(ph.wa.di100.wi250.D.Cot)
+
+#AIC Table
+
+
+AIC5set1<-AIC(null,	nullYR,
+            ph.wa.crop11.di100.wi250.D.S,
+            ph.wa.crop11.grass.h100.di100.wi250.D.Cot,
+            ph.wa.crop11.grass.h100.di100.wi250.D.S,
+            ph.wa.grass.h100.di100.wi250.D,
+            ph.wa.di100.wi250.D.Cot,
+            ph.wa.di100.wi250.D.S,
+            ph.wa.di100.wi250.D.Fa)
+
+
+
+deltaAIC5.1<-AIC5set1-(AICc(ph.wa.di100.wi250.D.S))
+table5AIC1<-cbind(AIC5set1,deltaAIC5.1)
+table5AIC1
+
+> table5AIC1
+df       AIC        df         AIC
+null                                       3 1137.2162 -962.1941 172.0220681
+nullYR                                     4 1139.2162 -961.1941 174.0220681
+ph.wa.crop11.di100.wi250.D.S              11  965.9111 -954.1941   0.7169636
+ph.wa.crop11.grass.h100.di100.wi250.D.Cot 12  966.5093 -953.1941   1.3152110
+ph.wa.crop11.grass.h100.di100.wi250.D.S   12  965.0064 -953.1941  -0.1877680
+ph.wa.grass.h100.di100.wi250.D            10  965.6962 -955.1941   0.5020818
+ph.wa.di100.wi250.D.Cot                   10  966.2418 -955.1941   1.0476562
+ph.wa.di100.wi250.D.S                     10  964.9208 -955.1941  -0.2732919
+ph.wa.di100.wi250.D.Fa                    10  966.6451 -955.1941   1.4510063
+
+
+> AICc Table
+
+null                                [1,] 1137.2458 172.0516248
+nullYR                               [2,] 1139.2655 174.0713899
+ph.wa.crop11.di100.wi250.D.S				[1,] 966.2395   1.0453218
+ph.wa.crop11.grass.h100.di100.wi250.D.Cot				[2,] 966.8979   1.7037540
+ph.wa.crop11.grass.h100.di100.wi250.D.S				[3,] 965.3949   0.2007750
+ph.wa.grass.h100.di100.wi250.D				[4,] 965.9695   0.7753737
+ph.wa.di100.wi250.D.Cot				[5,] 966.5151   1.3209482
+ph.wa.di100.wi250.D.S				[6,] 965.1941   0.0000000
+ph.wa.di100.wi250.D.Fa				[7,] 966.9184   1.7242982
+
+
+
+#weights calculations
+
+null<-exp(-0.5*376.3806307)
+A<-exp(-0.5*0.6731428)
+B<-exp(-0.5*1.7051634)
+C<-exp(-0.5*0.00)
+
+sum(null,A,B,C)
+=2.140528
+
+null/2.140528
+A/2.140528
+B/2.140528
+C/2.140528
+
+#Weights
+
+> null/2.140528
+[1] 8.698885e-83
+> A/2.140528
+[1] 0.3336629
+> B/2.140528
+[1] 0.1991625
+> C/2.140528
+[1] 0.4671745
+
+
+confint(perch.t.perch.h5.water11.grass.h.wire100.wire250.D.fallow500,level=0.85, method="Wald")
+confint(perch.t.perch.h5.crop.water11.grass.h.wire100.wire250.D.fallow500,level=0.85, method="Wald")
+confint(perch.t.crop5.crop.water11.grass.h.wire100.wire250.D.fallow500,level=0.85, method="Wald")
+
+
+summary(perch.t.perch.h5.water11.grass.h.wire100.wire250.D.fallow500)
+
+
+##__________________Plot______
+
+#Model with lowest AICc
+#ph.wa.di100.wi250.D.S
+
+library(sjPlot)
+
+
+plot_model(ph.wa.di100.wi250.D.S, type = "pred", terms = "Water11")
+plot_model(ph.wa.di100.wi250.D.S, type = "pred", terms="PerchH5 [all]")
+plot_model(ph.wa.di100.wi250.D.S, type = "pred", terms = "Develop500 [all]")
+
+plot_model(ph.wa.di100.wi250.D.S, terms = c("Water11","PerchH5","Develop500"),colors = "Accent", 
+           show.values = TRUE,
+           value.offset = .4,
+           value.size = 4,
+           dot.size = 3,
+           line.size = 1.5,
+           vline.color = "blue",
+           width = 1.5
+)
+
+library(ggplot2)
+library(jtools)
+library(MASS)
+
+class(LOSH16$Develop500)
+
+effect_plot(ph.wa.di100.wi250.D.S, pred = Develop500, element_line(colour = "blue", linetype = 1), interval = TRUE)
+
+
+####_________end____________####
+
+
+
