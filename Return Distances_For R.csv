@@ -1,0 +1,38 @@
+Bird_ID,Age,Sex,Breeding Status,Original_Lat,Original_Long,Resight_Lat,Resight_Long,Return Dist_Km,DIST,logDIST,Year,dummy
+Alex McGingy,ASY,Male,resident,35.75,-90.51,35.75,-90.51,0.48,476.96,2.68,2017,1
+Butch,SY,Male,resident,35.67,-90.57,35.67,-90.58,0.24,242.09,2.38,2017,1
+Ghost of Collins,ASY,Male,resident,35.65,-91.02,35.64,-91.02,0.12,124.64,2.1,2017,1
+Jeebus,ASY,Female,migrant,35.9,-90.84,35.9,-90.84,0.27,266.88,2.43,2017,1
+LeeVi,ASY,Female,resident,35.8,-90.31,35.8,-90.31,0.46,462.96,2.67,2017,1
+Lone Ranger,ASY,Male,resident,35.76,-90.5,35.76,-90.5,0.32,324.91,2.51,2017,1
+Maddy Jingle Shrike,SY,Female,migrant,35.7,-90.84,35.7,-90.84,0.11,110.73,2.04,2017,1
+Michelle,ASY,Female,resident,35.57,-90.9,35.57,-90.9,0.01,11.69,1.07,2017,1
+Obama da Great,ASY,Male,resident,35.48,-90.95,35.48,-90.95,0.24,235.22,2.37,2017,1
+Peanut,SY,Male,resident,35.6,-90.54,35.6,-90.53,0.48,476.93,2.68,2017,1
+Ricola,SY,Male,migrant,35.84,-90.9,35.85,-90.91,0.46,456.15,2.66,2017,1
+Rocjaw,ASY,Male,resident,35.84,-90.47,35.84,-90.46,0.85,854.8,2.93,2017,1
+Six-Way,SY,Female,resident,35.6,-91.01,35.6,-91.01,0.27,266.88,2.43,2017,1
+Tickfaw,ASY,Male,resident,35.76,-90.52,35.76,-90.52,0.35,351.12,2.55,2017,1
+Toad,SY,Female,migrant,35.65,-90.62,35.65,-90.62,0.12,120.12,2.08,2017,1
+Tony,ASY,Male,resident,35.7,-90.76,35.69,-90.76,0.09,86.85,1.94,2017,1
+Zapdos,SY,Female,resident,35.84,-90.56,35.77,-90.61,9.17,9171.49,3.96,2017,1
+Alex McGingy,ASY,Male,resident,35.75,-90.51,35.75,-90.51,0.47,465.95,2.67,2018,1
+Butch,ASY,Male,resident,35.67,-90.57,35.66,-90.57,0.84,842.8,2.93,2018,1
+Jeebus,ASY,Female,migrant,35.9,-90.84,35.9,-90.84,0.17,174.02,2.24,2018,1
+Maddy Jingle Shrike,ASY,Female,migrant,35.7,-90.84,35.7,-90.84,0.02,24.17,1.38,2018,1
+Michelle,ASY,Female,resident,35.57,-90.9,35.57,-90.9,0.41,407.88,2.61,2018,1
+Obama da Great,ASY,Male,resident,35.48,-90.95,35.48,-90.95,0.07,70.2,1.85,2018,1
+Rocjaw,ASY,Male,resident,35.84,-90.47,35.84,-90.46,1.22,1222.6,3.09,2018,1
+Tony,ASY,Male,resident,35.7,-90.76,35.7,-90.77,0.23,227.71,2.36,2018,1
+Saphira,ASY,Male,resident,35.75,-90.45,35.76,-90.46,0.3,297.73,2.47,2018,1
+Violetta,ASY,Female,migrant,35.76,-90.44,35.76,-90.44,0.13,134.56,2.13,2018,1
+The Hunter,SY,Male,migrant,35.84,-90.99,35.84,-90.99,0.05,50.02,1.7,2018,1
+Iceman,SY,Male,migrant,35.78,-90.88,35.91,-90.85,14.48,14477.74,4.16,2018,1
+Ms. Betty,SY,Female,migrant,35.48,-90.65,35.49,-90.65,0.44,441.65,2.65,2018,1
+Sea-sick Crocodile,ASY,Male,migrant,35.62,-90.56,35.62,-90.55,0.22,216,2.33,2018,1
+Raymond,SY,Male,migrant,35.86,-90.98,35.87,-90.98,0.67,666.13,2.82,2018,1
+Bagheera,SY,Female,migrant,35.47,-90.76,35.64,-90.73,18.22,18224.06,4.26,2018,1
+Farmall,SY,Female,migrant,35.88,-90.41,35.88,-90.38,2.43,2433.47,3.39,2018,1
+Calvin,ASY,Male,migrant,35.59,-90.86,35.59,-90.86,0.21,214.76,2.33,2018,1
+Rockette,SY,Female,resident,35.75,-90.45,35.76,-90.47,1.34,1336.52,3.13,2018,1
+Kubo,SY,Male,migrant,35.63,-91,35.64,-91,0.79,794.05,2.9,2018,1
