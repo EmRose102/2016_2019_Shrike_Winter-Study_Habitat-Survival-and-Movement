@@ -1,4 +1,4 @@
-# LOSH_Winter_Habitat
+# Loggerhead Shrike Non-breeding Habitat, Survival, and Movement
 
 ## This repository contains the following:
 1) Code and data used for modeling multi-scale, winter habitat selection by Loggerhead Shrikes.
