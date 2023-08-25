@@ -1,0 +1,274 @@
+#laptop directory
+setwd("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts")
+LOSH<-read.csv("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts/LOSH Site Fidelity and MPC/Return Distances_for R.csv", sep=",", header=T)
+head(LOSH)
+
+
+library(lme4)
+library(AICcmodavg)
+
+####_______________________________SITE FIDELITY__________________________________________________________####
+
+##________________________________________________________________________________________________________
+
+##______________Transfrom Return Distance
+
+returnsq<- (LOSH$DIST)^2
+shapiro.test(returnsq)
+
+returncube<- (LOSH$DIST)^3
+shapiro.test(returncube)
+
+returnrt<- sqrt(LOSH$DIST)
+shapiro.test(returnrt)
+
+returnln<- log(LOSH$DIST)
+shapiro.test(returnln)  #####Natural log transform made return distance normally distributed
+
+hist(returnln)
+
+returnlog<- log10(LOSH$DIST)
+shapiro.test(returnlog)  #####Log transform made return distance normally distributed
+
+hist(returnlog)
+
+##Added logDIST (log of return distance) column to csv
+
+shapiro.test(LOSH$logDIST)
+hist(LOSH$logDIST)
+
+LOSH$logDIST<- as.numeric(LOSH$logDIST)
+
+##Test Random Effects
+
+
+
+randoma<- glmer(logDIST ~ Age +Sex + (1|Year) ,data = LOSH)
+summary(randoma)
+
+randomb<- glmer(logDIST ~ Age +Sex + (1|Bird_ID) ,data = LOSH)
+summary(randomb)
+
+randomc<- glmer(logDIST ~ Age +Sex + (1|Year) + (1|Bird_ID) ,data = LOSH)
+
+
+
+randoma<- lmer(logDIST ~ Age +Sex + (1|Year) ,data = LOSH, REML=TRUE)
+summary(randoma)
+
+randomb<- lmer(logDIST ~ Age +Sex + (1|Bird_ID) ,data = LOSH)
+summary(randomb)
+
+randomc<- lmer(logDIST ~ Age +Sex + (1|Year) + (1|Bird_ID) ,data = LOSH)
+
+
+
+anova(random,randoma) #
+anova(randoma,randomb) #
+summary(random)
+
+
+#__________Fixed Effects_____________
+
+library(lmerTest)
+
+null<-lmer(logDIST ~ 1 + (1|Bird_ID), data = LOSH, REML=F)
+age<-lmer(logDIST ~ Age + (1|Bird_ID), data = LOSH, REML=F)
+sex<-lmer(logDIST ~ Sex + (1|Bird_ID), data = LOSH, REML=F)
+year<-lmer(logDIST ~ Year + (1|Bird_ID), data = LOSH, REML=F)
+age.year<-lmer(logDIST ~ Age + Year + (1|Bird_ID), data = LOSH, REML=F)
+sex.year<-lmer(logDIST ~ Sex + Year + (1|Bird_ID), data = LOSH, REML=F)
+age.sex<-lmer(logDIST ~ Age + Sex + (1|Bird_ID), data = LOSH, REML=F)
+full<-lmer(logDIST ~ Age + Sex + Year + (1|Bird_ID), data = LOSH, REML=F)
+
+anova(null,age)   #age is better (Chisq < 0.05)
+anova(null,sex)   #sex is not better
+anova(null,year)   #year is not better
+
+anova(age,age.sex)   #age and sex is not better
+anova(age,age.year)   #age and year is not better
+
+age.REML<-lmer(logDIST ~ Age + (1|Bird_ID), data = LOSH)
+
+summary(age.REML)
+
+1-pchisq((0.5156/0.2068)^2,4)
+
+
+confint(age)
+confint(age.year)
+
+
+AICset<-AIC(null,age,sex,year,age.year,sex.year,age.sex,full)
+
+deltaAIC<-AICset-(AIC(age))
+tableAIC<-cbind(AICset,deltaAIC)
+tableAIC
+
+
+AICset<-c(AICc(null),AICc(age),AICc(sex),AICc(year),AICc(age.year),AICc(sex.year),AICc(age.sex),AICc(full))
+
+
+deltaAIC<-AICset-(AICc(age))
+tableAIC<-cbind(AICset,deltaAIC)
+tableAIC
+
+
+####GLMM APPROACH
+
+null<-glmer(logDIST ~ 1 + (1|Bird_ID), data = LOSH)
+age<-glmer(logDIST ~ Age + (1|Bird_ID), data = LOSH)
+sex<-glmer(logDIST ~ Sex + (1|Bird_ID), data = LOSH)
+year<-glmer(logDIST ~ Year + (1|Bird_ID), data = LOSH)
+age.year<-glmer(logDIST ~ Age + Year + (1|Bird_ID), data = LOSH)
+sex.year<-glmer(logDIST ~ Sex + Year + (1|Bird_ID), data = LOSH)
+age.sex<-glmer(logDIST ~ Age + Sex + (1|Bird_ID), data = LOSH)
+full<-glmer(logDIST ~ Age + Sex + Year + (1|Bird_ID), data = LOSH)
+
+AICset<-c(AICc(null),AICc(age),AICc(sex),AICc(year),AICc(age.year),AICc(sex.year),AICc(age.sex),AICc(full))
+
+
+deltaAIC<-AICset-(AICc(age))
+tableAIC<-cbind(AICset,deltaAIC)
+tableAIC
+
+confint(age)
+confint(age.year)
+
+summary(age)
+
+
+
+####______________________________MCP Home Range Estimates____________________________##################
+
+
+setwd("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts")
+LOSH<-read.csv("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts/LOSH Site Fidelity and MPC/MPC Values for R.csv", sep=",", header=T)
+head(LOSH)
+
+
+library(lme4)
+library(AICcmodavg)
+
+
+shapiro.test(LOSH$Area_ha)
+hist(LOSH$Area_ha)
+
+
+##______________Transfrom MPC values
+
+
+mpcsq<- (LOSH$Area_ha)^2
+shapiro.test(mpcsq)
+
+mpccube<- (LOSH$Area_ha)^3
+shapiro.test(mpccube)
+
+mpcrt<- sqrt(LOSH$Area_ha)
+shapiro.test(mpcrt)
+
+mpcln<- log(LOSH$Area_ha)
+shapiro.test(mpcln)  #####Natural log transform made mcp normally distributed
+
+hist(mpcln)
+
+mpclog<- log10(LOSH$Area_ha)
+shapiro.test(mpclog)  #####Log transform made mcp normally distributed
+
+hist(mpclog)
+
+#Added logMCP (log 10 of Area_ha) column to csv file
+
+
+
+##Test Random Effects
+
+
+
+randoma<- glmer(logMCP ~ Age +Sex + (1|Points) ,data = LOSH)
+summary(randoma)
+
+randomb<- glmer(logMPC ~ Age +Sex + (1|Bird_ID) ,data = LOSH)
+summary(randomb)
+
+randomc<- glmer(logMPC ~ Age +Sex + (1|Year) + (1|Bird_ID) ,data = LOSH)
+
+
+
+randoma<- lmer(logMCP ~ Age +Sex +Year + (1|Points) ,data = LOSH)
+summary(randoma)
+
+randomb<- lmer(logMCP ~ Age +Sex +Year + (1|Bird_ID) ,data = LOSH)
+summary(randomb)
+
+randomc<- lmer(logMCP ~ Age +Sex +Year + (1|Bird_ID) + (1|Points) ,data = LOSH)
+
+
+
+anova(randoma,randomc) #
+anova(randomb,randomc) #
+summary(randomc)
+
+
+#__________Fixed Effects_____________
+
+
+null<-lmer(logMCP ~ 1 + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+age<-lmer(logMCP ~ Age + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+sex<-lmer(logMCP ~ Sex + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+year<-lmer(logMCP ~ Year + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+age.year<-lmer(logMCP ~ Age + Year + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+sex.year<-lmer(logMCP ~ Sex + Year + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+age.sex<-lmer(logMCP ~ Age + Sex + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+full<-lmer(logMCP ~ Age + Sex + Year + (1|Bird_ID) + (1|Points), data = LOSH, REML=F)
+
+anova(null,age)   #age is not better
+anova(null,sex)   #sex is not better
+anova(null,year)   #year is not better
+
+anova(age,age.sex)   #age and sex is not better
+anova(age,age.year)   #age and year is not better
+
+age.REML<-lmer(logMCP ~ Age + (1|Bird_ID), data = LOSH)
+
+summary(age.REML)
+anova(age.REML)
+
+1-pchisq((/0.2068)^2,4)
+
+library(lmerTest)
+
+summary(age.REML)
+
+
+
+#__________Fixed Effects including Number of Points_____________
+
+##Number of points is continuous and cannot be included as a random effect? -- says Jacob
+
+null<-lmer(logMCP ~ 1 + Points + (1|Bird_ID), data = LOSH, REML=F)
+age<-lmer(logMCP ~ Age + Points + (1|Bird_ID), data = LOSH, REML=F)
+sex<-lmer(logMCP ~ Sex + Points + (1|Bird_ID), data = LOSH, REML=F)
+year<-lmer(logMCP ~ Year + Points + (1|Bird_ID), data = LOSH, REML=F)
+age.year<-lmer(logMCP ~ Age + Year + Points + (1|Bird_ID), data = LOSH, REML=F)
+sex.year<-lmer(logMCP ~ Sex + Year + Points + (1|Bird_ID), data = LOSH, REML=F)
+age.sex<-lmer(logMCP ~ Age + Sex + Points + (1|Bird_ID), data = LOSH, REML=F)
+full<-lmer(logMCP ~ Age + Sex + Year + Points + (1|Bird_ID), data = LOSH, REML=F)
+
+anova(null,age)   #age is not better
+anova(null,sex)   #sex is not better
+anova(null,year)   #year is not better
+
+anova(age,age.sex)   #age and sex is not better
+anova(age,age.year)   #age and year is not better
+
+age.REML<-lmer(logMCP ~ Age + (1|Bird_ID), data = LOSH)
+
+summary(age.REML)
+anova(age.REML)
+
+1-pchisq((/0.2068)^2,4)
+
+library(lmerTest)
+
+summary(age.REML)
