@@ -1,4 +1,4 @@
-## Modeling of data subset for older (after-second-year) shrikes only from 2 winter seasons (2016-17 and 2017-18) in Craighead and Poinsett Counties of Arkansas
+## Modeling of data subset for younger (second-year) shrikes only from 2 winter seasons (2016-17 and 2017-18) in Craighead and Poinsett Counties of Arkansas
 
 #laptop directory
 setwd("C:/Users/emily/Desktop/Data Analysis with R/LOSH Scripts")
